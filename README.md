@@ -38,3 +38,7 @@ You can also build from the terminal:
 
 - History is stored locally on-device
 - The app does not require sign-in or network access for core calculator functionality
+
+## Documentation
+
+- Privacy Policy: [docs/privacy-policy.md](docs/privacy-policy.md)
