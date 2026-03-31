@@ -1,4 +1,4 @@
-package com.example.simplecalculator
+package com.creatorsenginelabs.simplicalc
 
 import org.junit.Test
 

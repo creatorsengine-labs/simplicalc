@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.simplecalculator"
+    namespace = "com.creatorsenginelabs.simplicalc"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.simplecalculator"
+        applicationId = "com.creatorsenginelabs.simplicalc"
         minSdk = 23
         targetSdk = 36
         versionCode = 1
