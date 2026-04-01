@@ -345,6 +345,28 @@ private fun formatFetchedCurrencyDate(rawDate: String?): String {
     }.getOrDefault(rawDate)
 }
 
+private fun formatCompactCurrencyNote(amount: Double, currencyCode: String): String {
+    val absolute = abs(amount)
+    val formatter = DecimalFormat("0.##")
+
+    return if (currencyCode == "INR") {
+        when {
+            absolute >= 10_000_000 -> "In words: ${formatter.format(amount / 10_000_000.0)} crore $currencyCode"
+            absolute >= 100_000 -> "In words: ${formatter.format(amount / 100_000.0)} lakh $currencyCode"
+            absolute >= 1_000 -> "In words: ${formatter.format(amount / 1_000.0)} thousand $currencyCode"
+            else -> "In words: ${formatter.format(amount)} $currencyCode"
+        }
+    } else {
+        when {
+            absolute >= 1_000_000_000_000 -> "In words: ${formatter.format(amount / 1_000_000_000_000.0)} trillion $currencyCode"
+            absolute >= 1_000_000_000 -> "In words: ${formatter.format(amount / 1_000_000_000.0)} billion $currencyCode"
+            absolute >= 1_000_000 -> "In words: ${formatter.format(amount / 1_000_000.0)} million $currencyCode"
+            absolute >= 1_000 -> "In words: ${formatter.format(amount / 1_000.0)} thousand $currencyCode"
+            else -> "In words: ${formatter.format(amount)} $currencyCode"
+        }
+    }
+}
+
 data class CalculatorHistoryEntry(
     val expression: String,
     val timestamp: Long,
@@ -2291,6 +2313,11 @@ private fun UnitConversionDetailScreen(
         fromDisplayValue = formatConversionValue(convertedValue)
         toDisplayValue = formatNumber(inputValue)
     }
+    val secondBoxNumericValue = if (activeInputSide == "from") {
+        toUnit.fromBase(fromUnit.toBase(parsedValue))
+    } else {
+        parsedValue
+    }
 
     BoxWithConstraints(
         modifier = Modifier
@@ -2452,6 +2479,16 @@ private fun UnitConversionDetailScreen(
                 fontFamily = calculatorFont,
                 modifier = Modifier.padding(start = 4.dp)
             )
+            if (category.key == "currency") {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = formatCompactCurrencyNote(secondBoxNumericValue, toUnit.symbol),
+                    color = SoftText.copy(alpha = 0.78f),
+                    fontSize = 12.sp,
+                    fontFamily = calculatorFont,
+                    modifier = Modifier.padding(start = 4.dp)
+                )
+            }
 
             Spacer(modifier = Modifier.weight(1f))
 
