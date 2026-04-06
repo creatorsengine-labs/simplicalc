@@ -629,12 +629,64 @@ fun CalculatorScreen() {
         }
     }
 
+    fun applyPercent() {
+        if (currentValue == "Error") return
+        if (operator != null && shouldResetDisplay) return
+
+        val current = currentValue.toDoubleOrNull() ?: return
+        val formattedCurrent = formatNumber(currentValue)
+
+        if (operator == null) {
+            val result = (current / 100.0).toString()
+            val formattedResult = formatNumber(result)
+            val completedChain = "$formattedCurrent% = $formattedResult"
+            expression = "$formattedCurrent% ="
+            currentValue = result
+            shouldResetDisplay = true
+            activeExpressionChain = completedChain
+            activeHistoryEntry = completedChain
+            persistActiveHistory()
+            return
+        }
+
+        val prev = previousValue.toDoubleOrNull() ?: return
+        val opSymbol = when (operator) {
+            "*" -> "x"
+            "/" -> "/"
+            "-" -> "-"
+            "+" -> "+"
+            else -> ""
+        }
+        val formattedPrev = formatNumber(previousValue)
+        val result = when (operator) {
+            "+" -> (prev + (prev * current / 100.0)).toString()
+            "-" -> (prev - (prev * current / 100.0)).toString()
+            "*" -> (prev * (current / 100.0)).toString()
+            "/" -> if (current == 0.0) "Error" else (prev / (current / 100.0)).toString()
+            else -> return
+        }
+        val formattedResult = formatNumber(result)
+        val chainPrefix = if (activeExpressionChain.isBlank()) {
+            "$formattedPrev $opSymbol $formattedCurrent%"
+        } else {
+            "$activeExpressionChain $opSymbol $formattedCurrent%"
+        }
+        val completedChain = "$chainPrefix = $formattedResult"
+
+        expression = "$chainPrefix ="
+        currentValue = result
+        operator = null
+        shouldResetDisplay = true
+        activeExpressionChain = completedChain
+        activeHistoryEntry = completedChain
+        persistActiveHistory()
+    }
+
     fun operatorSymbol(op: String?): String {
         return when (op) {
             "*" -> "x"
             "/" -> "/"
             "-" -> "-"
-            "mod" -> "%"
             else -> op.orEmpty()
         }
     }
@@ -650,7 +702,6 @@ fun CalculatorScreen() {
             "-" -> (prev - current).toString()
             "*" -> (prev * current).toString()
             "/" -> if (current == 0.0) "Error" else (prev / current).toString()
-            "mod" -> ((prev / 100.0) * current).toString()
             else -> return
         }
 
@@ -941,6 +992,7 @@ fun CalculatorScreen() {
                 hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                 setOperator(value)
             },
+            onPercent = withHaptics(::applyPercent),
             onAppendNumber = { value ->
                 hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                 appendNumber(value)
@@ -1057,6 +1109,7 @@ private fun CalculatorHomeScreen(
     onDeleteAllDigits: () -> Unit,
     onToggleSign: () -> Unit,
     onOperator: (String) -> Unit,
+    onPercent: () -> Unit,
     onAppendNumber: (String) -> Unit,
     onAppendDecimal: () -> Unit,
     onCalculate: () -> Unit,
@@ -1268,7 +1321,7 @@ private fun CalculatorHomeScreen(
                 CalculatorRow(
                     buttons = listOf(
                         CalcButtonData("C", ButtonType.SPECIAL) { onClearAll() },
-                        CalcButtonData("%", ButtonType.UTILITY) { onOperator("mod") },
+                        CalcButtonData("%", ButtonType.UTILITY) { onPercent() },
                         CalcButtonData("\u232B", ButtonType.UTILITY, onLongClick = onDeleteAllDigits) { onDeleteLastDigit() },
                         CalcButtonData("\u00F7", ButtonType.OPERATOR, isActive = activeOperator == "/") {
                             onOperator("/")
